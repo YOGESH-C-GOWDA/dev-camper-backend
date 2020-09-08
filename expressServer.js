@@ -2,20 +2,36 @@ const express = require('express');
 const dotenv = require('dotenv');
 const bootcamp = require("./routes/bootcamp.js");
 const morgan = require('morgan');
-const logger = require("./middleware/logger.js")
+const colors = require('colors');
+const logger = require("./middleware/logger.js");
+const connToMongoAtlas = require("./config/db.js");
 
 // Congif env file using dotenv
 dotenv.config({ path: './config/config.env' });
 
+// Connect to mongodb via mongoose
+connToMongoAtlas();
+
+// Instatiating our Server
 const app = express();
 
-app.use(morgan("dev"));
+// Middleware
+app.use(express.json());
+if (process.env.NODE_ENV === 'development') {
+    app.use(morgan("dev"));
+}
 app.use(logger);
 app.use("/api/v1/bootcamp", bootcamp);
+app.use(express.json());
 
-// Initialise all evn variatble to variabe
-const PORT = process.env.PORT || 5000;
-const NODE_ENV = process.env.NODE_ENV;
 
-app.listen(5000, console.log(`serevr listing at ${PORT} 
-and running in Enviroment ${NODE_ENV}`));
+
+
+const server = app.listen(5000, console.log(`serevr listing at ${process.env.PORT} 
+and running in Enviroment ${process.env.NODE_ENV}`.blue));
+
+// Error Handling globally or Hadling rejections
+process.on("unhandledRejection", (err, promice) => {
+    console.log("\nError   ", err.message);
+    server.close(() => (process.exit(1)))
+})
